@@ -1,0 +1,36 @@
+{
+  "name": "ipa-hangul",
+  "version": "1.0.0",
+  "description": "Convert IPA (International Phonetic Alphabet) pronunciation to Korean Hangul",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts --clean",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "ipa",
+    "hangul",
+    "korean",
+    "pronunciation",
+    "phonetic",
+    "converter"
+  ],
+  "author": "YSW",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "tsup": "^8.0.0"
+  }
+}

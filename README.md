@@ -85,10 +85,12 @@ Each IPA sound is mapped to the closest Korean equivalent, then assembled into v
 |------|-----|--------|-------|
 | hello | /ˈhɛloʊ/ | 헤로 | Stress marker removed |
 | cat | /kæt/ | 캩 | Final 't' → ㅌ |
+| book | /bʊk/ | 붘 | Final 'k' → ㅋ |
 | internet | /ˈɪntərnɛt/ | 인털넽 | Multi-syllable |
-| world | /wɜːrld/ | 월르드 | Consonant cluster 'rld' |
+| world | /wɝld/ | 월ㄷ | Consonant-only 'ld' as Jamo |
 | pretty | /ˈprɪti/ | 프리티 | Consonant cluster 'pr' |
-| button | /ˈbʌtn̩/ | 버튼 | Syllabic 'n' |
+| see | /siː/ | 시- | Long vowel marked with dash |
+| rumble | /ˈɹʌmb(ə)l/ | 럼ㅂㄹ | Optional sounds removed |
 
 ## API
 

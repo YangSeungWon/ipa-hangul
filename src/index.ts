@@ -268,7 +268,22 @@ function convertSegment(tokens: Token[]): string {
     // Case 1: Consonant followed by vowel → Hangul syllable
     if (token.type === 'consonant' && i + 1 < tokens.length && tokens[i + 1].type === 'vowel') {
       const consonant = token.ipa;
-      const vowel = tokens[i + 1].ipa;
+      let vowel = tokens[i + 1].ipa;
+
+      // Special handling for ʃ (sh) - convert vowels to y-series for palatalization
+      if (consonant === 'ʃ') {
+        const shVowelMap: Record<string, string> = {
+          'ə': 'jə',  // ʃə → 셔 (shə like in -tion)
+          'ɜː': 'jɜː', 'ɜ': 'jɜ', 'ʌ': 'jə',
+          'a': 'ja', 'ɑː': 'jɑː', 'ɑ': 'jɑ',  // ʃa → 샤
+          'o': 'jo', 'ɔː': 'jɔː', 'ɔ': 'jɔ',  // ʃo → 쇼
+          'u': 'ju', 'uː': 'juː', 'ʊ': 'ju',  // ʃu → 슈
+        };
+
+        if (shVowelMap[vowel]) {
+          vowel = shVowelMap[vowel];
+        }
+      }
 
       const choIdx = CONSONANT_TO_CHOSEONG[consonant];
       const jungIndices = VOWEL_TO_JUNGSEONG[vowel];

@@ -2,11 +2,14 @@
 
 Convert IPA (International Phonetic Alphabet) pronunciation to Korean Hangul.
 
+English | [한국어](./README.ko.md)
+
 ## Features
 
-- 🎯 **Accurate IPA-to-Hangul conversion** based on phonetic rules
+- 🎯 **Convert IPA to readable Hangul**
 - 📏 **Long vowels marked with dash (-)** - `/siː/` → `시-`
 - 🔤 **Consonant clusters as Jamo** - `/wɝld/` → `월ㄷ`
+- ⭐ **Optional stress marking** - Markdown (`**텍**스트`) or HTML (`<strong>텍</strong>스트`)
 - 🏗️ **Modular & maintainable** code structure
 - 📦 **Zero dependencies**
 - 💯 **TypeScript support** with full type definitions
@@ -24,7 +27,7 @@ npm install ipa-hangul
 import { ipaToHangul } from 'ipa-hangul';
 
 // Basic examples
-ipaToHangul('/ˈhɛloʊ/');    // "헤로"
+ipaToHangul('/həˈləʊ/');    // "허로"
 ipaToHangul('/kæt/');       // "캩"
 ipaToHangul('/bʊk/');       // "붘"
 
@@ -39,11 +42,28 @@ ipaToHangul('/strɛŋkθs/');  // "ㅅㅌ렝ㅋㅅㅅ"
 
 // Optional sounds (removed)
 ipaToHangul('/ˈɹʌmb(ə)l/'); // "럼ㅂㄹ"
+
+// Stress marking with Markdown
+ipaToHangul('/həˈləʊ/', { markStress: 'markdown' });
+// "허**로**" (primary stress with **)
+
+ipaToHangul('/ˈɪntərnɛt/', { markStress: 'markdown' });
+// "**인**털넽" (primary stress)
+
+ipaToHangul('/pɹəˌnaʊn.siˈeɪ.ʃən/', { markStress: 'markdown' });
+// "ㅍ러*나*운시**에**이션" (primary ** and secondary *)
+
+// Stress marking with HTML
+ipaToHangul('/həˈləʊ/', { markStress: 'html' });
+// "허<strong>로</strong>" (primary stress with <strong>)
+
+ipaToHangul('/pɹəˌnaʊn.siˈeɪ.ʃən/', { markStress: 'html' });
+// "ㅍ러<em>나</em>운시<strong>에</strong>이션" (primary <strong> and secondary <em>)
 ```
 
 ## Features
 
-- **Accurate conversion**: Based on Korean phonetic rules and Jamo assembly
+- **IPA to Hangul conversion**: Uses Korean Jamo assembly
 - **Handles complex IPA**: Supports diphthongs, consonant clusters, syllabic consonants
 - **Clean API**: Single function with string input/output
 - **TypeScript**: Full type definitions included
@@ -65,9 +85,12 @@ ipaToHangul('/ˈɹʌmb(ə)l/'); // "럼ㅂㄹ"
 - Syllabic consonants: l̩, n̩, m̩
 
 ### Special handling
-- Stress markers (ˈ, ˌ) are removed
-- Optional sounds in parentheses are removed
-- Delimiters (/, [, ], .) are ignored
+- **Stress markers** (ˈ primary, ˌ secondary):
+  - Default: Used as syllable boundaries, not displayed
+  - With `markStress: 'markdown'`: Primary `**강**`, Secondary `*약*`
+  - With `markStress: 'html'`: Primary `<strong>강</strong>`, Secondary `<em>약</em>`
+- **Optional sounds** in parentheses are removed
+- **Delimiters** (/, [, ], .) are ignored
 
 ## How it works
 
@@ -83,33 +106,58 @@ Each IPA sound is mapped to the closest Korean equivalent, then assembled into v
 
 | Word | IPA | Hangul | Notes |
 |------|-----|--------|-------|
-| hello | /ˈhɛloʊ/ | 헤로 | Stress marker removed |
+| hello | /həˈləʊ/ | 허로 | Stress marker as boundary |
 | cat | /kæt/ | 캩 | Final 't' → ㅌ |
 | book | /bʊk/ | 붘 | Final 'k' → ㅋ |
 | internet | /ˈɪntərnɛt/ | 인털넽 | Multi-syllable |
 | world | /wɝld/ | 월ㄷ | Consonant-only 'ld' as Jamo |
-| pretty | /ˈprɪti/ | 프리티 | Consonant cluster 'pr' |
 | see | /siː/ | 시- | Long vowel marked with dash |
 | rumble | /ˈɹʌmb(ə)l/ | 럼ㅂㄹ | Optional sounds removed |
 
+### Stress Marking Examples
+
+| Word | IPA | Default | With Markdown | With HTML |
+|------|-----|---------|---------------|-----------|
+| hello | /həˈləʊ/ | 허로 | 허**로** | 허`<strong>`로`</strong>` |
+| internet | /ˈɪntərnɛt/ | 인털넽 | **인**털넽 | `<strong>`인`</strong>`털넽 |
+| pronunciation | /pɹəˌnaʊn.siˈeɪ.ʃən/ | ㅍ러나운시에이션 | ㅍ러*나*운시**에**이션 | ㅍ러`<em>`나`</em>`운시`<strong>`에`</strong>`이션 |
+
 ## API
 
-### `ipaToHangul(ipa: string): string`
+### `ipaToHangul(ipa: string, options?: IpaToHangulOptions): string`
 
 Converts IPA notation to Korean Hangul pronunciation.
 
 **Parameters:**
 - `ipa`: IPA notation string (can include stress markers, brackets, optional sounds)
+- `options` (optional): Configuration object
+  - `markStress?: 'markdown' | 'html'`: Format for stress marking
+    - `'markdown'`: Primary stress `**강**`, Secondary stress `*약*`
+    - `'html'`: Primary stress `<strong>강</strong>`, Secondary stress `<em>약</em>`
+    - Default: No stress marking (stress markers used as syllable boundaries)
 
 **Returns:**
-- Korean Hangul pronunciation string
+- Korean Hangul pronunciation string (with optional stress markers)
 
-**Example:**
+**Examples:**
 ```typescript
 import { ipaToHangul } from 'ipa-hangul';
 
-const pronunciation = ipaToHangul('/ˈhɛloʊ/');
-console.log(pronunciation); // "헤로"
+// Basic usage (no stress marking)
+const basic = ipaToHangul('/həˈləʊ/');
+console.log(basic); // "허로"
+
+// Markdown stress marking
+const markdown = ipaToHangul('/həˈləʊ/', { markStress: 'markdown' });
+console.log(markdown); // "허**로**"
+
+// HTML stress marking
+const html = ipaToHangul('/həˈləʊ/', { markStress: 'html' });
+console.log(html); // "허<strong>로</strong>"
+
+// Primary and secondary stress
+const complex = ipaToHangul('/pɹəˌnaʊn.siˈeɪ.ʃən/', { markStress: 'markdown' });
+console.log(complex); // "ㅍ러*나*운시**에**이션"
 ```
 
 ## Limitations

@@ -114,11 +114,17 @@ const VOWEL_TO_JUNGSEONG: Record<string, number[]> = {
 // ============================================================================
 
 type TokenType = 'consonant' | 'vowel';
+type StressLevel = 'primary' | 'secondary' | 'none';
 
 interface Token {
   type: TokenType;
   ipa: string;
   length: number;
+}
+
+interface SyllableInfo {
+  text: string;
+  stress: StressLevel;
 }
 
 // ============================================================================
@@ -171,16 +177,42 @@ function matchConsonant(text: string, pos: number): string | null {
 // ============================================================================
 
 /**
- * Preprocess IPA string: remove optional sounds, stress markers, delimiters
+ * Preprocess IPA string: remove optional sounds, preserve stress markers
+ * Returns string with stress markers converted to special tokens
  */
 function preprocessIPA(ipa: string): string {
   return ipa
     .replace(/\([^)]*\)/g, '')  // Remove optional sounds in parentheses
-    .replace(/[ˈˌ′']/g, '.')  // Convert stress markers to syllable boundaries
-    .replace(/[\/\[\]]/g, '')  // Remove brackets and slashes
+    .replace(/[\/\[\]]/g, '')  // Remove brackets and slashes first
+    .replace(/ˈ/g, '.[P]')  // Primary stress → .[P]
+    .replace(/ˌ/g, '.[S]')  // Secondary stress → .[S]
+    .replace(/[′']/g, '.')  // Other stress markers → plain boundary
     .replace(/\.+/g, '.')  // Normalize multiple dots to single dot
-    .replace(/^\.|\.$/g, '')  // Remove leading/trailing dots
+    .replace(/^\./g, '')  // Remove leading dot
     .trim();
+}
+
+/**
+ * Parse syllables with stress information
+ * Input format: "text1.[P]text2.[S]text3.text4"
+ */
+function parseSyllables(text: string): SyllableInfo[] {
+  const syllables: SyllableInfo[] = [];
+  const parts = text.split('.');
+
+  for (const part of parts) {
+    if (!part) continue;
+
+    if (part.startsWith('[P]')) {
+      syllables.push({ text: part.slice(3), stress: 'primary' });
+    } else if (part.startsWith('[S]')) {
+      syllables.push({ text: part.slice(3), stress: 'secondary' });
+    } else {
+      syllables.push({ text: part, stress: 'none' });
+    }
+  }
+
+  return syllables;
 }
 
 /**
@@ -377,6 +409,56 @@ function convertSegment(tokens: Token[]): string {
 // MAIN FUNCTION
 // ============================================================================
 
+export interface IpaToHangulOptions {
+  markStress?: 'markdown' | 'html';
+}
+
+/**
+ * Extract first Hangul character from text
+ * - Complete Hangul syllable: 0xAC00-0xD7A3 (가-힣)
+ * - Compatibility Jamo: 0x3131-0x318E (ㄱ-ㆎ)
+ */
+function getFirstHangulSyllable(text: string): { first: string; rest: string } {
+  for (let i = 0; i < text.length; i++) {
+    const code = text.charCodeAt(i);
+    // Check if it's a complete Hangul syllable or compatibility jamo
+    if ((code >= 0xAC00 && code <= 0xD7A3) || (code >= 0x3131 && code <= 0x318E)) {
+      return {
+        first: text.substring(0, i + 1),
+        rest: text.substring(i + 1)
+      };
+    }
+  }
+  // No Hangul character found, return entire string
+  return { first: text, rest: '' };
+}
+
+/**
+ * Apply stress marker to hangul text based on format
+ * Only marks the first Hangul syllable
+ */
+function applyStressMarker(hangul: string, stress: StressLevel, format?: 'markdown' | 'html'): string {
+  if (!format || stress === 'none') return hangul;
+
+  const { first, rest } = getFirstHangulSyllable(hangul);
+
+  if (stress === 'primary') {
+    if (format === 'markdown') {
+      return `**${first}**${rest}`;
+    } else if (format === 'html') {
+      return `<strong>${first}</strong>${rest}`;
+    }
+  } else if (stress === 'secondary') {
+    if (format === 'markdown') {
+      return `*${first}*${rest}`;
+    } else if (format === 'html') {
+      return `<em>${first}</em>${rest}`;
+    }
+  }
+
+  return hangul;
+}
+
 /**
  * Convert IPA notation to Korean Hangul pronunciation
  *
@@ -384,31 +466,36 @@ function convertSegment(tokens: Token[]): string {
  * - Long vowels (ː) create segments separated by dash (-)
  * - Consonant-only sequences use compatibility Jamo (ㄱㄴㄷ...)
  * - Vowel+consonant combinations form complete Hangul syllables
+ * - Optional stress marking with markdown or HTML format
  *
  * @param ipa - IPA notation string (e.g., "/ˈhɛloʊ/", "/wɜːrld/")
+ * @param options - Optional configuration
+ * @param options.markStress - Format for stress marking: 'markdown' (**text**) or 'html' (<strong>text</strong>)
  * @returns Korean Hangul pronunciation string
  *
  * @example
  * ipaToHangul("/ˈhɛloʊ/")  // "헤로"
+ * ipaToHangul("/ˈhɛloʊ/", { markStress: 'markdown' })  // "**헤**로"
+ * ipaToHangul("/ˈhɛloʊ/", { markStress: 'html' })  // "<strong>헤</strong>로"
  * ipaToHangul("/wɜːrld/")  // "워-ㄹㄷ"
  * ipaToHangul("/kæt/")     // "캩"
  */
-export function ipaToHangul(ipa: string): string {
+export function ipaToHangul(ipa: string, options?: IpaToHangulOptions): string {
   if (!ipa) return '';
 
-  // Step 1: Preprocess (converts stress markers to syllable boundaries)
+  // Step 1: Preprocess (converts stress markers to special tokens)
   const cleaned = preprocessIPA(ipa);
   if (!cleaned) return '';
 
-  // Step 2: Split by syllable boundaries (.)
-  const syllables = cleaned.split('.').filter(s => s.length > 0);
+  // Step 2: Parse syllables with stress information
+  const syllables = parseSyllables(cleaned);
 
   // Step 3: Process each syllable
   const results: string[] = [];
 
   for (const syllable of syllables) {
     // Split by long vowels within each syllable
-    const segments = splitByLongVowel(syllable);
+    const segments = splitByLongVowel(syllable.text);
 
     // Convert each segment
     const convertedSegments = segments.map((seg) => {
@@ -422,7 +509,11 @@ export function ipaToHangul(ipa: string): string {
       return hangul;
     });
 
-    results.push(convertedSegments.join(''));
+    const hangulResult = convertedSegments.join('');
+
+    // Apply stress marker if needed
+    const markedResult = applyStressMarker(hangulResult, syllable.stress, options?.markStress);
+    results.push(markedResult);
   }
 
   return results.join('');

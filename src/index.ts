@@ -176,7 +176,10 @@ function matchConsonant(text: string, pos: number): string | null {
 function preprocessIPA(ipa: string): string {
   return ipa
     .replace(/\([^)]*\)/g, '')  // Remove optional sounds in parentheses
-    .replace(/[ˈˌ′'\/\[\].]/g, '')  // Remove stress markers and delimiters
+    .replace(/[ˈˌ′']/g, '.')  // Convert stress markers to syllable boundaries
+    .replace(/[\/\[\]]/g, '')  // Remove brackets and slashes
+    .replace(/\.+/g, '.')  // Normalize multiple dots to single dot
+    .replace(/^\.|\.$/g, '')  // Remove leading/trailing dots
     .trim();
 }
 
@@ -378,24 +381,34 @@ function convertSegment(tokens: Token[]): string {
 export function ipaToHangul(ipa: string): string {
   if (!ipa) return '';
 
-  // Step 1: Preprocess
+  // Step 1: Preprocess (converts stress markers to syllable boundaries)
   const cleaned = preprocessIPA(ipa);
   if (!cleaned) return '';
 
-  // Step 2: Split by long vowels
-  const segments = splitByLongVowel(cleaned);
+  // Step 2: Split by syllable boundaries (.)
+  const syllables = cleaned.split('.').filter(s => s.length > 0);
 
-  // Step 3: Convert each segment
-  const convertedSegments = segments.map((seg) => {
-    const tokens = tokenizeSegment(seg.text);
-    const hangul = convertSegment(tokens);
+  // Step 3: Process each syllable
+  const results: string[] = [];
 
-    // Add dash after segment if it had a long vowel
-    if (seg.hasLongVowel) {
-      return hangul + '-';
-    }
-    return hangul;
-  });
+  for (const syllable of syllables) {
+    // Split by long vowels within each syllable
+    const segments = splitByLongVowel(syllable);
 
-  return convertedSegments.join('');
+    // Convert each segment
+    const convertedSegments = segments.map((seg) => {
+      const tokens = tokenizeSegment(seg.text);
+      const hangul = convertSegment(tokens);
+
+      // Add dash after segment if it had a long vowel
+      if (seg.hasLongVowel) {
+        return hangul + '-';
+      }
+      return hangul;
+    });
+
+    results.push(convertedSegments.join(''));
+  }
+
+  return results.join('');
 }

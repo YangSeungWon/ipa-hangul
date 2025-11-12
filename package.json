@@ -18,7 +18,8 @@
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --dts --clean",
     "test": "node test.mjs",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "prepare": "husky"
   },
   "repository": {
     "type": "git",
@@ -39,7 +40,8 @@
   "author": "YSW",
   "license": "MIT",
   "devDependencies": {
-    "typescript": "^5.0.0",
-    "tsup": "^8.0.0"
+    "husky": "^9.1.7",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0"
   }
 }

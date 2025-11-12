@@ -17,6 +17,7 @@
   ],
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --dts --clean",
+    "test": "node test.mjs",
     "prepublishOnly": "npm run build"
   },
   "repository": {

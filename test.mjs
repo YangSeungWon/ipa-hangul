@@ -38,21 +38,23 @@ const tests = [
 ];
 
 // Test cases with stress marking (markdown)
+// Note: Stress applies to the first complete syllable INCLUDING any leading consonant jamos
 const markdownTests = [
   { ipa: '/həˈləʊ/', expected: '허**로**', description: 'hello - markdown primary stress' },
   { ipa: '/ˈɪntərnɛt/', expected: '**인**털넽', description: 'internet - markdown primary stress' },
   { ipa: '/pɹəˌnaʊn.siˈeɪ.ʃən/', expected: 'ㅍ러*나*운시**에**이션', description: 'pronunciation - markdown (primary ** and secondary *)' },
   { ipa: '/kənˈsɑː.lə.deɪt/', expected: '컨**사**-러데잍', description: 'consolidate - markdown primary stress' },
-  { ipa: '/ˌpɹəʊ.pɹi.əʊˈsɛp.ʃən/', expected: '*ㅍ*로ㅍ리오**셉**션', description: 'proprioception - markdown (secondary * and primary **)' },
+  { ipa: '/ˌpɹəʊ.pɹi.əʊˈsɛp.ʃən/', expected: '*ㅍ로*ㅍ리오**셉**션', description: 'proprioception - markdown (secondary * includes leading jamo + syllable)' },
 ];
 
 // Test cases with stress marking (html)
+// Note: Stress applies to the first complete syllable INCLUDING any leading consonant jamos
 const htmlTests = [
   { ipa: '/həˈləʊ/', expected: '허<strong>로</strong>', description: 'hello - html primary stress' },
   { ipa: '/ˈɪntərnɛt/', expected: '<strong>인</strong>털넽', description: 'internet - html primary stress' },
   { ipa: '/pɹəˌnaʊn.siˈeɪ.ʃən/', expected: 'ㅍ러<em>나</em>운시<strong>에</strong>이션', description: 'pronunciation - html (primary strong and secondary em)' },
   { ipa: '/kənˈsɑː.lə.deɪt/', expected: '컨<strong>사</strong>-러데잍', description: 'consolidate - html primary stress' },
-  { ipa: '/ˌpɹəʊ.pɹi.əʊˈsɛp.ʃən/', expected: '<em>ㅍ</em>로ㅍ리오<strong>셉</strong>션', description: 'proprioception - html (secondary em and primary strong)' },
+  { ipa: '/ˌpɹəʊ.pɹi.əʊˈsɛp.ʃən/', expected: '<em>ㅍ로</em>ㅍ리오<strong>셉</strong>션', description: 'proprioception - html (secondary em includes leading jamo + syllable)' },
 ];
 
 let passed = 0;

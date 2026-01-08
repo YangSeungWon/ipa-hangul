@@ -414,33 +414,63 @@ export interface IpaToHangulOptions {
 }
 
 /**
- * Extract first Hangul character from text
- * - Complete Hangul syllable: 0xAC00-0xD7A3 (가-힣)
- * - Compatibility Jamo: 0x3131-0x318E (ㄱ-ㆎ)
+ * Check if character is a Hangul compatibility jamo (ㄱ-ㅎ, ㅏ-ㅣ)
  */
-function getFirstHangulSyllable(text: string): { first: string; rest: string } {
+function isCompatibilityJamo(code: number): boolean {
+  return code >= 0x3131 && code <= 0x318E;
+}
+
+/**
+ * Check if character is a complete Hangul syllable (가-힣)
+ */
+function isCompleteSyllable(code: number): boolean {
+  return code >= 0xAC00 && code <= 0xD7A3;
+}
+
+/**
+ * Extract first stressed syllable from text
+ * In Korean phonetics, stress applies to the entire syllable including:
+ * - Leading consonant jamos (ㅍㄹ...)
+ * - The first complete syllable with a vowel (레, 프, etc.)
+ *
+ * Examples:
+ * - "ㅍ레버런ㅌ" → first="ㅍ레", rest="버런ㅌ"
+ * - "프레버런ㅌ" → first="프레", rest="버런ㅌ"
+ * - "헤로" → first="헤", rest="로"
+ */
+function getFirstStressedSyllable(text: string): { first: string; rest: string } {
+  let firstCompleteIdx = -1;
+
+  // Find the first complete Hangul syllable (contains vowel)
   for (let i = 0; i < text.length; i++) {
     const code = text.charCodeAt(i);
-    // Check if it's a complete Hangul syllable or compatibility jamo
-    if ((code >= 0xAC00 && code <= 0xD7A3) || (code >= 0x3131 && code <= 0x318E)) {
-      return {
-        first: text.substring(0, i + 1),
-        rest: text.substring(i + 1)
-      };
+    if (isCompleteSyllable(code)) {
+      firstCompleteIdx = i;
+      break;
     }
   }
-  // No Hangul character found, return entire string
-  return { first: text, rest: '' };
+
+  // If no complete syllable found, just return first character
+  if (firstCompleteIdx === -1) {
+    if (text.length === 0) return { first: '', rest: '' };
+    return { first: text[0], rest: text.substring(1) };
+  }
+
+  // Include all leading jamos + the first complete syllable
+  return {
+    first: text.substring(0, firstCompleteIdx + 1),
+    rest: text.substring(firstCompleteIdx + 1)
+  };
 }
 
 /**
  * Apply stress marker to hangul text based on format
- * Only marks the first Hangul syllable
+ * Marks the first complete syllable (including any leading consonant jamos)
  */
 function applyStressMarker(hangul: string, stress: StressLevel, format?: 'markdown' | 'html'): string {
   if (!format || stress === 'none') return hangul;
 
-  const { first, rest } = getFirstHangulSyllable(hangul);
+  const { first, rest } = getFirstStressedSyllable(hangul);
 
   if (stress === 'primary') {
     if (format === 'markdown') {

@@ -193,8 +193,20 @@ function preprocessIPA(ipa: string): string {
 }
 
 /**
+ * Check if IPA text contains any vowel characters
+ */
+function hasIPAVowel(text: string): boolean {
+  return /[iɪeɛæɑɒɔʌəɜɝʊuoa]/.test(text);
+}
+
+/**
  * Parse syllables with stress information
  * Input format: "text1.[P]text2.[S]text3.text4"
+ *
+ * Also merges consonant-only unstressed syllables into the following stressed syllable.
+ * This handles onset consonants separated by the stress marker in IPA notation:
+ * e.g., /rˈɛtɜrɪk/ → "r.[P]ɛtɜrɪk" → [{r, none}, {ɛtɜrɪk, primary}]
+ *       → merged: [{rɛtɜrɪk, primary}] → "레터릭" instead of "ㄹ에터릭"
  */
 function parseSyllables(text: string): SyllableInfo[] {
   const syllables: SyllableInfo[] = [];
@@ -212,7 +224,21 @@ function parseSyllables(text: string): SyllableInfo[] {
     }
   }
 
-  return syllables;
+  // Merge consonant-only unstressed syllables into following stressed syllables
+  // In IPA, onset consonants before a stress marker belong to the stressed syllable
+  const merged: SyllableInfo[] = [];
+  for (let i = 0; i < syllables.length; i++) {
+    const curr = syllables[i];
+    const next = syllables[i + 1];
+
+    if (next && next.stress !== 'none' && curr.stress === 'none' && !hasIPAVowel(curr.text)) {
+      next.text = curr.text + next.text;
+      continue;
+    }
+    merged.push(curr);
+  }
+
+  return merged;
 }
 
 /**

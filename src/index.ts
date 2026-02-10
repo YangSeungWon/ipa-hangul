@@ -202,6 +202,81 @@ function hasIPAVowel(text: string): boolean {
 }
 
 /**
+ * Get trailing consonants that should move to next syllable
+ * Keeps one consonant as potential jongseong if available
+ * Returns { before: string to keep, trailing: consonants to move }
+ *
+ * Example: "kəntr" → { before: "kənt", trailing: "r" }
+ *          (keeps 'n' or 't' as jongseong, moves 'r' to next syllable)
+ */
+function getTrailingConsonants(text: string): { before: string; trailing: string } {
+  // First find all trailing consonants
+  let i = text.length;
+
+  while (i > 0) {
+    // Check for 2-char consonants first
+    if (i >= 2) {
+      const twoChar = text.substring(i - 2, i);
+      if (CONSONANT_TO_CHOSEONG[twoChar] || CONSONANT_TO_JAMO[twoChar]) {
+        i -= 2;
+        continue;
+      }
+    }
+
+    // Check for single char consonant
+    const oneChar = text[i - 1];
+    if (CONSONANT_TO_CHOSEONG[oneChar] || CONSONANT_TO_JAMO[oneChar]) {
+      i--;
+      continue;
+    }
+
+    // Not a consonant, stop
+    break;
+  }
+
+  const beforeConsonants = text.substring(0, i);
+  const allTrailing = text.substring(i);
+
+  // If no trailing consonants, return as is
+  if (!allTrailing) {
+    return { before: text, trailing: '' };
+  }
+
+  // Keep one consonant that can be jongseong, move the rest
+  // Check from left to right in the trailing consonants
+  let keepUntil = 0;
+
+  // Try to find first consonant that can be jongseong
+  // Check for 2-char consonants first at position 0
+  if (allTrailing.length >= 2) {
+    const twoChar = allTrailing.substring(0, 2);
+    if (CONSONANT_TO_JONGSEONG[twoChar] !== undefined) {
+      keepUntil = 2;
+    }
+  }
+
+  // Check single char at position 0 if no 2-char match
+  if (keepUntil === 0 && allTrailing.length >= 1) {
+    const oneChar = allTrailing[0];
+    if (CONSONANT_TO_JONGSEONG[oneChar] !== undefined) {
+      keepUntil = 1;
+    }
+  }
+
+  return {
+    before: beforeConsonants + allTrailing.substring(0, keepUntil),
+    trailing: allTrailing.substring(keepUntil)
+  };
+}
+
+/**
+ * Check if IPA string starts with a vowel
+ */
+function startsWithVowel(text: string): boolean {
+  return matchVowel(text, 0) !== null;
+}
+
+/**
  * Parse syllables with stress information
  * Input format: "text1.[P]text2.[S]text3.text4"
  *
@@ -209,6 +284,10 @@ function hasIPAVowel(text: string): boolean {
  * This handles onset consonants separated by the stress marker in IPA notation:
  * e.g., /rˈɛtɜrɪk/ → "r.[P]ɛtɜrɪk" → [{r, none}, {ɛtɜrɪk, primary}]
  *       → merged: [{rɛtɜrɪk, primary}] → "레터릭" instead of "ㄹ에터릭"
+ *
+ * Additionally moves trailing consonants to the next syllable if it starts with a vowel:
+ * e.g., /kəntrˈoʊl/ → "kəntr.[P]oʊl" → [{kəntr, none}, {oʊl, primary}]
+ *       → adjusted: [{kənt, none}, {roʊl, primary}] → "컨트롤" instead of "컨ㅌㄹ올"
  */
 function parseSyllables(text: string): SyllableInfo[] {
   const syllables: SyllableInfo[] = [];
@@ -238,6 +317,24 @@ function parseSyllables(text: string): SyllableInfo[] {
       continue;
     }
     merged.push(curr);
+  }
+
+  // Move trailing consonants to next syllable if it starts with a vowel
+  // This handles cases like "kəntr" + "oʊl" → "kənt" + "roʊl"
+  for (let i = 0; i < merged.length - 1; i++) {
+    const curr = merged[i];
+    const next = merged[i + 1];
+
+    // Check if next syllable starts with a vowel
+    if (startsWithVowel(next.text)) {
+      const { before, trailing } = getTrailingConsonants(curr.text);
+
+      // Only move if there are trailing consonants and something remains
+      if (trailing && before) {
+        curr.text = before;
+        next.text = trailing + next.text;
+      }
+    }
   }
 
   return merged;

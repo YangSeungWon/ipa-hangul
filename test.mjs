@@ -38,6 +38,11 @@ const tests = [
 
   // IPA script g (ɡ U+0261) vs ASCII g
   { ipa: '/vˈɪɡɜrəs/', expected: '비거러ㅅ', description: 'vigorous - IPA script g (ɡ), final s as jamo' },
+
+  // j+vowel and w+vowel combinations
+  { ipa: '/jɛs/', expected: '예ㅅ', description: 'yes - jɛ → 예' },
+  { ipa: '/wɛt/', expected: '윁', description: 'wet - wɛ → 웨' },
+  { ipa: '/wæks/', expected: '왴ㅅ', description: 'wax - wæ → 왜' },
 ];
 
 // Test cases with stress marking (markdown)

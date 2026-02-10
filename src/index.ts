@@ -89,9 +89,10 @@ const VOWEL_TO_JUNGSEONG: Record<string, number[]> = {
   'wɜː': [JUNGSEONG.WO], 'wɜ': [JUNGSEONG.WO], 'wə': [JUNGSEONG.WO],
   'wɝ': [JUNGSEONG.WO], 'wɔː': [JUNGSEONG.WO], 'wɔ': [JUNGSEONG.WO],
   'wɑː': [JUNGSEONG.WA], 'wɑ': [JUNGSEONG.WA], 'wɪ': [JUNGSEONG.WI],
-  'wi': [JUNGSEONG.WI], 'weɪ': [JUNGSEONG.WE],
+  'wi': [JUNGSEONG.WI], 'weɪ': [JUNGSEONG.WE], 'wɛ': [JUNGSEONG.WE], 'we': [JUNGSEONG.WE],
+  'wæ': [JUNGSEONG.WAE],
   'juː': [JUNGSEONG.YU], 'ju': [JUNGSEONG.YU], 'jə': [JUNGSEONG.YEO],
-  'jɛ': [JUNGSEONG.YEO], 'jɑː': [JUNGSEONG.YA], 'jɑ': [JUNGSEONG.YA],
+  'jɛ': [JUNGSEONG.YE], 'je': [JUNGSEONG.YE], 'jɑː': [JUNGSEONG.YA], 'jɑ': [JUNGSEONG.YA],
   'jɔː': [JUNGSEONG.YO], 'jɔ': [JUNGSEONG.YO], 'ji': [JUNGSEONG.I],
   'jɪ': [JUNGSEONG.I],
   // Simple vowels

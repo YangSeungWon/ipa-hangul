@@ -48,7 +48,7 @@ const COMPAT_JAMO: Record<string, string> = {
 // IPA consonant → Choseong index
 const CONSONANT_TO_CHOSEONG: Record<string, number> = {
   'p': CHOSEONG.PIEUP, 'b': CHOSEONG.BIEUP, 't': CHOSEONG.TIEUT,
-  'd': CHOSEONG.DIGEUT, 'k': CHOSEONG.KIEUK, 'g': CHOSEONG.GIYEOK,
+  'd': CHOSEONG.DIGEUT, 'k': CHOSEONG.KIEUK, 'g': CHOSEONG.GIYEOK, 'ɡ': CHOSEONG.GIYEOK,
   'm': CHOSEONG.MIEUM, 'n': CHOSEONG.NIEUN, 'ŋ': CHOSEONG.IEUNG,
   'f': CHOSEONG.PIEUP, 'v': CHOSEONG.BIEUP, 'θ': CHOSEONG.SIOS,
   'ð': CHOSEONG.DIGEUT, 's': CHOSEONG.SIOS, 'z': CHOSEONG.JIEUT,
@@ -59,21 +59,22 @@ const CONSONANT_TO_CHOSEONG: Record<string, number> = {
 };
 
 // IPA consonant → Jongseong index
+// Note: Fricatives (s, z, ʃ, ʒ) and affricates (tʃ, dʒ) are excluded because
+// Korean jongseong ㅅ/ㅈ/ㅊ are pronounced as /t/, losing the original sound.
+// These consonants are instead rendered as jamo (ㅅ, ㅈ, ㅊ).
 const CONSONANT_TO_JONGSEONG: Record<string, number> = {
   'p': JONGSEONG.BIEUP, 'b': JONGSEONG.BIEUP, 't': JONGSEONG.TIEUT,
-  'd': JONGSEONG.DIGEUT, 'k': JONGSEONG.KIEUK, 'g': JONGSEONG.GIYEOK,
+  'd': JONGSEONG.DIGEUT, 'k': JONGSEONG.KIEUK, 'g': JONGSEONG.GIYEOK, 'ɡ': JONGSEONG.GIYEOK,
   'm': JONGSEONG.MIEUM, 'n': JONGSEONG.NIEUN, 'ŋ': JONGSEONG.IEUNG,
   'f': JONGSEONG.PIEUP, 'v': JONGSEONG.BIEUP, 'θ': JONGSEONG.SIOS,
-  'ð': JONGSEONG.DIGEUT, 's': JONGSEONG.SIOS, 'z': JONGSEONG.JIEUT,
-  'ʃ': JONGSEONG.SIOS, 'ʒ': JONGSEONG.JIEUT,
+  'ð': JONGSEONG.DIGEUT,
   'l': JONGSEONG.RIEUL, 'r': JONGSEONG.RIEUL, 'ɹ': JONGSEONG.RIEUL,
-  'tʃ': JONGSEONG.CHIEUT, 'dʒ': JONGSEONG.JIEUT,
 };
 
 // IPA consonant → Compatibility Jamo
 const CONSONANT_TO_JAMO: Record<string, string> = {
   'p': COMPAT_JAMO['ㅍ'], 'b': COMPAT_JAMO['ㅂ'], 't': COMPAT_JAMO['ㅌ'],
-  'd': COMPAT_JAMO['ㄷ'], 'k': COMPAT_JAMO['ㅋ'], 'g': COMPAT_JAMO['ㄱ'],
+  'd': COMPAT_JAMO['ㄷ'], 'k': COMPAT_JAMO['ㅋ'], 'g': COMPAT_JAMO['ㄱ'], 'ɡ': COMPAT_JAMO['ㄱ'],
   'm': COMPAT_JAMO['ㅁ'], 'n': COMPAT_JAMO['ㄴ'], 'ŋ': COMPAT_JAMO['ㅇ'],
   'f': COMPAT_JAMO['ㅍ'], 'v': COMPAT_JAMO['ㅂ'], 'θ': COMPAT_JAMO['ㅅ'],
   'ð': COMPAT_JAMO['ㄷ'], 's': COMPAT_JAMO['ㅅ'], 'z': COMPAT_JAMO['ㅈ'],

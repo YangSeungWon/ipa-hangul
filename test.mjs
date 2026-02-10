@@ -35,6 +35,9 @@ const tests = [
 
   // Optional sounds (removed)
   { ipa: '/ˈɹʌmb(ə)l/', expected: '럼ㅂㄹ', description: 'rumble - optional sound removed' },
+
+  // IPA script g (ɡ U+0261) vs ASCII g
+  { ipa: '/vˈɪɡɜrəs/', expected: '비거러ㅅ', description: 'vigorous - IPA script g (ɡ), final s as jamo' },
 ];
 
 // Test cases with stress marking (markdown)

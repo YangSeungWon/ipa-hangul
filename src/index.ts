@@ -203,13 +203,15 @@ function hasIPAVowel(text: string): boolean {
 
 /**
  * Get trailing consonants that should move to next syllable
- * Keeps one consonant as potential jongseong if available
- * Returns { before: string to keep, trailing: consonants to move }
  *
- * Example: "kəntr" → { before: "kənt", trailing: "r" }
- *          (keeps 'n' or 't' as jongseong, moves 'r' to next syllable)
+ * @param text - The text to analyze
+ * @param preferOnset - If true, move ALL trailing consonants (don't keep any as jongseong)
+ *                      If false, keep one consonant as potential jongseong
+ *
+ * Example with preferOnset=false: "kəntr" → { before: "kənt", trailing: "r" }
+ * Example with preferOnset=true:  "kənt" → { before: "kən", trailing: "t" }
  */
-function getTrailingConsonants(text: string): { before: string; trailing: string } {
+function getTrailingConsonants(text: string, preferOnset: boolean = false): { before: string; trailing: string } {
   // First find all trailing consonants
   let i = text.length;
 
@@ -240,6 +242,14 @@ function getTrailingConsonants(text: string): { before: string; trailing: string
   // If no trailing consonants, return as is
   if (!allTrailing) {
     return { before: text, trailing: '' };
+  }
+
+  // If preferOnset is true, move ALL trailing consonants to next syllable
+  if (preferOnset) {
+    return {
+      before: beforeConsonants,
+      trailing: allTrailing
+    };
   }
 
   // Keep one consonant that can be jongseong, move the rest
@@ -288,8 +298,10 @@ function startsWithVowel(text: string): boolean {
  * Additionally moves trailing consonants to the next syllable if it starts with a vowel:
  * e.g., /kəntrˈoʊl/ → "kəntr.[P]oʊl" → [{kəntr, none}, {oʊl, primary}]
  *       → adjusted: [{kənt, none}, {roʊl, primary}] → "컨트롤" instead of "컨ㅌㄹ올"
+ *
+ * @param preferOnset - If true, move ALL trailing consonants to next syllable
  */
-function parseSyllables(text: string): SyllableInfo[] {
+function parseSyllables(text: string, preferOnset: boolean = true): SyllableInfo[] {
   const syllables: SyllableInfo[] = [];
   const parts = text.split('.');
 
@@ -321,13 +333,14 @@ function parseSyllables(text: string): SyllableInfo[] {
 
   // Move trailing consonants to next syllable if it starts with a vowel
   // This handles cases like "kəntr" + "oʊl" → "kənt" + "roʊl"
+  // With preferOnset=true: "tɪt" + "i" → "tɪ" + "ti" → 티티
   for (let i = 0; i < merged.length - 1; i++) {
     const curr = merged[i];
     const next = merged[i + 1];
 
     // Check if next syllable starts with a vowel
     if (startsWithVowel(next.text)) {
-      const { before, trailing } = getTrailingConsonants(curr.text);
+      const { before, trailing } = getTrailingConsonants(curr.text, preferOnset);
 
       // Only move if there are trailing consonants and something remains
       if (trailing && before) {
@@ -536,6 +549,13 @@ function convertSegment(tokens: Token[]): string {
 
 export interface IpaToHangulOptions {
   markStress?: 'markdown' | 'html';
+  /**
+   * When true, trailing consonants move to next syllable if it starts with a vowel.
+   * This produces more natural Korean loan word pronunciation.
+   * e.g., "tɪti" → "티티" instead of "팉이"
+   * @default true
+   */
+  preferOnset?: boolean;
 }
 
 /**
@@ -638,12 +658,15 @@ function applyStressMarker(hangul: string, stress: StressLevel, format?: 'markdo
 export function ipaToHangul(ipa: string, options?: IpaToHangulOptions): string {
   if (!ipa) return '';
 
+  // Default preferOnset to true for natural Korean loan word pronunciation
+  const preferOnset = options?.preferOnset !== false;
+
   // Step 1: Preprocess (converts stress markers to special tokens)
   const cleaned = preprocessIPA(ipa);
   if (!cleaned) return '';
 
   // Step 2: Parse syllables with stress information
-  const syllables = parseSyllables(cleaned);
+  const syllables = parseSyllables(cleaned, preferOnset);
 
   // Step 3: Process each syllable
   const results: string[] = [];

@@ -43,6 +43,19 @@ const tests = [
   { ipa: '/jɛs/', expected: '예ㅅ', description: 'yes - jɛ → 예' },
   { ipa: '/wɛt/', expected: '윁', description: 'wet - wɛ → 웨' },
   { ipa: '/wæks/', expected: '왴ㅅ', description: 'wax - wæ → 왜' },
+  { ipa: '/pjʊr/', expected: '퓰', description: 'pure - jʊ → ㅠ' },
+
+  // preferOnset: move last consonant to next syllable
+  { ipa: '/kənvˈʌlʃən/', expected: '컨벌션', description: 'convulsion - preferOnset (v moves, n stays)' },
+  { ipa: '/aɪˈdɛntɪti/', expected: '아이덴티티', description: 'identity - preferOnset (t moves)' },
+
+  // Semi-vowel (j/w) + consonant moving together
+  { ipa: '/ˌɪmbjˈu/', expected: '임뷰', description: 'imbue - bj moves together to form 뷰' },
+
+  // waɪ diphthong
+  { ipa: '/waɪ/', expected: '와이', description: 'why - waɪ → 와이' },
+  { ipa: '/waɪn/', expected: '와인', description: 'wine - waɪ + n' },
+  { ipa: '/ˈkwaɪət/', expected: '콰이엍', description: 'quiet - kw + aɪ → 콰이' },
 ];
 
 // Test cases with stress marking (markdown)

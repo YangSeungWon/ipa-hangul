@@ -90,8 +90,8 @@ const VOWEL_TO_JUNGSEONG: Record<string, number[]> = {
   'wɝ': [JUNGSEONG.WO], 'wɔː': [JUNGSEONG.WO], 'wɔ': [JUNGSEONG.WO],
   'wɑː': [JUNGSEONG.WA], 'wɑ': [JUNGSEONG.WA], 'wɪ': [JUNGSEONG.WI],
   'wi': [JUNGSEONG.WI], 'weɪ': [JUNGSEONG.WE], 'wɛ': [JUNGSEONG.WE], 'we': [JUNGSEONG.WE],
-  'wæ': [JUNGSEONG.WAE],
-  'juː': [JUNGSEONG.YU], 'ju': [JUNGSEONG.YU], 'jə': [JUNGSEONG.YEO],
+  'wæ': [JUNGSEONG.WAE], 'waɪ': [JUNGSEONG.WA, JUNGSEONG.I],
+  'juː': [JUNGSEONG.YU], 'ju': [JUNGSEONG.YU], 'jʊ': [JUNGSEONG.YU], 'jə': [JUNGSEONG.YEO],
   'jɛ': [JUNGSEONG.YE], 'je': [JUNGSEONG.YE], 'jɑː': [JUNGSEONG.YA], 'jɑ': [JUNGSEONG.YA],
   'jɔː': [JUNGSEONG.YO], 'jɔ': [JUNGSEONG.YO], 'ji': [JUNGSEONG.I],
   'jɪ': [JUNGSEONG.I],
@@ -245,7 +245,7 @@ function getTrailingConsonants(text: string, preferOnset: boolean = false): { be
     return { before: text, trailing: '' };
   }
 
-  // If preferOnset is true, move only the LAST consonant to next syllable
+  // If preferOnset is true, move consonants to next syllable to form proper onset
   // This consonant will become the onset (choseong) of the next syllable
   if (preferOnset) {
     // Check for 2-char consonant at the end (like tʃ, dʒ)
@@ -259,8 +259,38 @@ function getTrailingConsonants(text: string, preferOnset: boolean = false): { be
       }
     }
 
-    // Move only the last single consonant
+    // Check if last consonant is a semi-vowel (j, w) that combines with following vowel
+    // In this case, also move the consonant before it to form proper onset
+    // e.g., "bj" + "u" → "bju" → 뷰, not "b" + "ju" → ㅂ유
     const lastOne = allTrailing[allTrailing.length - 1];
+    if ((lastOne === 'j' || lastOne === 'w') && allTrailing.length >= 2) {
+      // Check if there's a consonant before the semi-vowel
+      const beforeSemiVowel = allTrailing.substring(0, allTrailing.length - 1);
+
+      // Check for 2-char consonant right before semi-vowel (like tʃ, dʒ)
+      if (beforeSemiVowel.length >= 2) {
+        const lastTwoBeforeSemi = beforeSemiVowel.substring(beforeSemiVowel.length - 2);
+        if (CONSONANT_TO_CHOSEONG[lastTwoBeforeSemi]) {
+          return {
+            before: beforeConsonants + beforeSemiVowel.substring(0, beforeSemiVowel.length - 2),
+            trailing: lastTwoBeforeSemi + lastOne
+          };
+        }
+      }
+
+      // Check for single consonant before semi-vowel
+      if (beforeSemiVowel.length >= 1) {
+        const oneBeforeSemi = beforeSemiVowel[beforeSemiVowel.length - 1];
+        if (CONSONANT_TO_CHOSEONG[oneBeforeSemi]) {
+          return {
+            before: beforeConsonants + beforeSemiVowel.substring(0, beforeSemiVowel.length - 1),
+            trailing: oneBeforeSemi + lastOne
+          };
+        }
+      }
+    }
+
+    // Move only the last single consonant
     if (CONSONANT_TO_CHOSEONG[lastOne] || CONSONANT_TO_JAMO[lastOne]) {
       return {
         before: beforeConsonants + allTrailing.substring(0, allTrailing.length - 1),

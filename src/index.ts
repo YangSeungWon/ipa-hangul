@@ -205,11 +205,12 @@ function hasIPAVowel(text: string): boolean {
  * Get trailing consonants that should move to next syllable
  *
  * @param text - The text to analyze
- * @param preferOnset - If true, move ALL trailing consonants (don't keep any as jongseong)
- *                      If false, keep one consonant as potential jongseong
+ * @param preferOnset - If true, move only the LAST consonant to next syllable (to be its onset)
+ *                      If false, keep one consonant as potential jongseong, move the rest
  *
  * Example with preferOnset=false: "kəntr" → { before: "kənt", trailing: "r" }
  * Example with preferOnset=true:  "kənt" → { before: "kən", trailing: "t" }
+ * Example with preferOnset=true:  "kənv" → { before: "kən", trailing: "v" } (only last consonant moves)
  */
 function getTrailingConsonants(text: string, preferOnset: boolean = false): { before: string; trailing: string } {
   // First find all trailing consonants
@@ -244,12 +245,31 @@ function getTrailingConsonants(text: string, preferOnset: boolean = false): { be
     return { before: text, trailing: '' };
   }
 
-  // If preferOnset is true, move ALL trailing consonants to next syllable
+  // If preferOnset is true, move only the LAST consonant to next syllable
+  // This consonant will become the onset (choseong) of the next syllable
   if (preferOnset) {
-    return {
-      before: beforeConsonants,
-      trailing: allTrailing
-    };
+    // Check for 2-char consonant at the end (like tʃ, dʒ)
+    if (allTrailing.length >= 2) {
+      const lastTwo = allTrailing.substring(allTrailing.length - 2);
+      if (CONSONANT_TO_CHOSEONG[lastTwo] || CONSONANT_TO_JAMO[lastTwo]) {
+        return {
+          before: beforeConsonants + allTrailing.substring(0, allTrailing.length - 2),
+          trailing: lastTwo
+        };
+      }
+    }
+
+    // Move only the last single consonant
+    const lastOne = allTrailing[allTrailing.length - 1];
+    if (CONSONANT_TO_CHOSEONG[lastOne] || CONSONANT_TO_JAMO[lastOne]) {
+      return {
+        before: beforeConsonants + allTrailing.substring(0, allTrailing.length - 1),
+        trailing: lastOne
+      };
+    }
+
+    // Fallback: no consonant to move
+    return { before: text, trailing: '' };
   }
 
   // Keep one consonant that can be jongseong, move the rest

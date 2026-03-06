@@ -91,7 +91,8 @@ const VOWEL_TO_JUNGSEONG: Record<string, number[]> = {
   'wɑː': [JUNGSEONG.WA], 'wɑ': [JUNGSEONG.WA], 'wɪ': [JUNGSEONG.WI],
   'wi': [JUNGSEONG.WI], 'weɪ': [JUNGSEONG.WE], 'wɛ': [JUNGSEONG.WE], 'we': [JUNGSEONG.WE],
   'wæ': [JUNGSEONG.WAE], 'waɪ': [JUNGSEONG.WA, JUNGSEONG.I],
-  'juː': [JUNGSEONG.YU], 'ju': [JUNGSEONG.YU], 'jʊ': [JUNGSEONG.YU], 'jə': [JUNGSEONG.YEO],
+  'wʌ': [JUNGSEONG.WO], 'wʊ': [JUNGSEONG.U], 'wɒ': [JUNGSEONG.WO],
+  'juː': [JUNGSEONG.YU], 'ju': [JUNGSEONG.YU], 'jʊ': [JUNGSEONG.YU], 'jə': [JUNGSEONG.YEO], 'jɜ': [JUNGSEONG.YEO], 'jɜː': [JUNGSEONG.YEO],
   'jɛ': [JUNGSEONG.YE], 'je': [JUNGSEONG.YE], 'jɑː': [JUNGSEONG.YA], 'jɑ': [JUNGSEONG.YA],
   'jɔː': [JUNGSEONG.YO], 'jɔ': [JUNGSEONG.YO], 'ji': [JUNGSEONG.I],
   'jɪ': [JUNGSEONG.I],
@@ -279,9 +280,12 @@ function getTrailingConsonants(text: string, preferOnset: boolean = false): { be
       }
 
       // Check for single consonant before semi-vowel
+      // But keep liquids (l, r) as coda - they sound natural as 받침 in Korean
+      // e.g., "ljɜr" → l stays as 받침, only j moves: 밀.여ㄹ (not 미.렬)
       if (beforeSemiVowel.length >= 1) {
         const oneBeforeSemi = beforeSemiVowel[beforeSemiVowel.length - 1];
-        if (CONSONANT_TO_CHOSEONG[oneBeforeSemi]) {
+        const isLiquid = oneBeforeSemi === 'l' || oneBeforeSemi === 'r' || oneBeforeSemi === 'ɹ' || oneBeforeSemi === 'ɾ';
+        if (CONSONANT_TO_CHOSEONG[oneBeforeSemi] && !isLiquid) {
           return {
             before: beforeConsonants + beforeSemiVowel.substring(0, beforeSemiVowel.length - 1),
             trailing: oneBeforeSemi + lastOne
@@ -291,7 +295,9 @@ function getTrailingConsonants(text: string, preferOnset: boolean = false): { be
     }
 
     // Move only the last single consonant
-    if (CONSONANT_TO_CHOSEONG[lastOne] || CONSONANT_TO_JAMO[lastOne]) {
+    // But keep liquids (l, r) as coda - they're natural as 받침 in Korean
+    const isLastLiquid = lastOne === 'l' || lastOne === 'r' || lastOne === 'ɹ' || lastOne === 'ɾ';
+    if ((CONSONANT_TO_CHOSEONG[lastOne] || CONSONANT_TO_JAMO[lastOne]) && !isLastLiquid) {
       return {
         before: beforeConsonants + allTrailing.substring(0, allTrailing.length - 1),
         trailing: lastOne
@@ -520,7 +526,14 @@ function convertSegment(tokens: Token[]): string {
           // Check if there's a vowel after this consonant
           const hasVowelAfter = i + 3 < tokens.length && tokens[i + 3].type === 'vowel';
 
-          if (jongMapping !== undefined && !hasVowelAfter) {
+          // Special case: liquids (l, r) before j/w-vowels prefer staying as jongseong
+          // because 받침 ㄹ sounds like /l/ and j/w-vowels are natural with just ㅇ onset
+          // e.g., "mɪljɜr" → 밀여ㄹ (not 미렬)
+          const isLiquid = nextCons === 'l' || nextCons === 'r' || nextCons === 'ɹ' || nextCons === 'ɾ';
+          const nextVowelIsJW = hasVowelAfter && (tokens[i + 3].ipa.startsWith('j') || tokens[i + 3].ipa.startsWith('w'));
+          const preferJongseong = isLiquid && nextVowelIsJW;
+
+          if (jongMapping !== undefined && (!hasVowelAfter || preferJongseong)) {
             // Use as jongseong
             jongIdx = jongMapping;
             consumed = 3;

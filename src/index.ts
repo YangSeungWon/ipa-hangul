@@ -294,10 +294,8 @@ function getTrailingConsonants(text: string, preferOnset: boolean = false): { be
       }
     }
 
-    // Move only the last single consonant
-    // But keep liquids (l, r) as coda - they're natural as 받침 in Korean
-    const isLastLiquid = lastOne === 'l' || lastOne === 'r' || lastOne === 'ɹ' || lastOne === 'ɾ';
-    if ((CONSONANT_TO_CHOSEONG[lastOne] || CONSONANT_TO_JAMO[lastOne]) && !isLastLiquid) {
+    // Move only the last single consonant to next syllable as onset
+    if (CONSONANT_TO_CHOSEONG[lastOne] || CONSONANT_TO_JAMO[lastOne]) {
       return {
         before: beforeConsonants + allTrailing.substring(0, allTrailing.length - 1),
         trailing: lastOne
